@@ -21,19 +21,22 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:gravity="bottom|end"
+            android:gravity="bottom"
             android:padding="24dp">
 
-            <TextView
+            <EditText
                 android:id="@+id/txtInput"
                 android:textSize="28sp"
                 android:gravity="end"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/text_input"
                 android:fontFamily="sans-serif-medium"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:alpha="0.8" />
+                android:background="@android:color/transparent"
+                android:inputType="text"
+                android:hint="0"
+                android:textColorHint="@color/text_secondary" />
 
             <TextView
                 android:id="@+id/txtResult"
@@ -73,8 +76,16 @@
 
         <!-- Row 4 -->
         <Button android:id="@+id/btn0" android:text="0" style="@style/ButtonBase" />
+        <Button android:id="@+id/btnBackspace" android:text="⌫" style="@style/ButtonClear" />
         <Button android:id="@+id/btnClear" android:text="C" style="@style/ButtonClear" />
-        <Button android:id="@+id/btnEquals" android:text="=" style="@style/ButtonEquals" />
         <Button android:id="@+id/btnAdd" android:text="+" style="@style/ButtonOp" />
+
+        <!-- Row 5 -->
+        <Button
+            android:id="@+id/btnEquals"
+            android:text="="
+            style="@style/ButtonEquals"
+            android:layout_columnSpan="4"
+            android:layout_gravity="fill_horizontal" />
     </GridLayout>
 </LinearLayout>

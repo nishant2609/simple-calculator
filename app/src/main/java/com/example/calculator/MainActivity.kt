@@ -2,6 +2,8 @@ package com.example.calculator
 
 import android.animation.ObjectAnimator
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.OvershootInterpolator
@@ -11,8 +13,8 @@ import com.example.calculator.databinding.ActivityMainBinding
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val calculator = Calculator()
-    private var expression = ""
     private var lastResult = ""
+    private var isUpdatingProgrammatically = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,9 +24,26 @@ class MainActivity : AppCompatActivity() {
         setupNumberButtons()
         setupOperatorButtons()
         setupSpecialButtons()
+        setupEditText()
 
         // Initial entrance animation
         animateEntrance()
+    }
+
+    private fun setupEditText() {
+        // Listen for manual text changes
+        binding.txtInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                if (!isUpdatingProgrammatically) {
+                    // Clear result when user manually edits
+                    binding.txtResult.text = ""
+                }
+            }
+        })
     }
 
     private fun setupNumberButtons() {
@@ -37,8 +56,7 @@ class MainActivity : AppCompatActivity() {
         numberButtons.forEach { button ->
             button.setOnClickListener {
                 animateButton(it)
-                expression += button.text
-                updateDisplay()
+                appendToInput(button.text.toString())
             }
         }
     }
@@ -54,26 +72,42 @@ class MainActivity : AppCompatActivity() {
         operatorButtons.forEach { (button, operator) ->
             button.setOnClickListener {
                 animateButton(it)
-                if (expression.isNotEmpty() && !expression.endsWith(" ")) {
-                    expression += " $operator "
-                    updateDisplay()
+                val currentText = binding.txtInput.text.toString()
+                if (currentText.isNotEmpty() && !currentText.endsWith(" ")) {
+                    appendToInput(" $operator ")
                 }
             }
         }
     }
 
     private fun setupSpecialButtons() {
+        binding.btnBackspace.setOnClickListener {
+            animateButton(it)
+            val currentText = binding.txtInput.text.toString()
+            if (currentText.isNotEmpty()) {
+                val newText = if (currentText.endsWith(" ")) {
+                    // Remove operator with spaces (e.g., " + ")
+                    currentText.dropLast(3)
+                } else {
+                    // Remove single character
+                    currentText.dropLast(1)
+                }
+                updateInputText(newText)
+                binding.txtResult.text = ""
+            }
+        }
+
         binding.btnClear.setOnClickListener {
             animateButton(it)
-            expression = ""
+            updateInputText("")
             lastResult = ""
-            binding.txtInput.text = ""
             binding.txtResult.text = ""
             animateClear()
         }
 
         binding.btnEquals.setOnClickListener {
             animateButton(it)
+            val expression = binding.txtInput.text.toString()
             if (expression.isNotEmpty()) {
                 val result = calculator.calculate(expression)
                 lastResult = if (result % 1.0 == 0.0) {
@@ -87,13 +121,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateDisplay() {
-        binding.txtInput.text = expression
-        binding.txtInput.alpha = 0f
-        binding.txtInput.animate()
-            .alpha(1f)
-            .setDuration(150)
-            .start()
+    private fun appendToInput(text: String) {
+        val currentText = binding.txtInput.text.toString()
+        val cursorPosition = binding.txtInput.selectionStart
+
+        val newText = StringBuilder(currentText).insert(cursorPosition, text).toString()
+        val newCursorPosition = cursorPosition + text.length
+
+        updateInputText(newText)
+        binding.txtInput.setSelection(newCursorPosition)
+        binding.txtResult.text = ""
+    }
+
+    private fun updateInputText(text: String) {
+        isUpdatingProgrammatically = true
+        binding.txtInput.setText(text)
+        binding.txtInput.setSelection(text.length)
+        isUpdatingProgrammatically = false
     }
 
     private fun animateButton(view: View) {
@@ -130,6 +174,9 @@ class MainActivity : AppCompatActivity() {
         binding.txtInput.animate()
             .alpha(0f)
             .setDuration(200)
+            .withEndAction {
+                binding.txtInput.alpha = 1f
+            }
             .start()
 
         binding.txtResult.animate()
@@ -143,7 +190,8 @@ class MainActivity : AppCompatActivity() {
             binding.btn7, binding.btn8, binding.btn9, binding.btnDivide,
             binding.btn4, binding.btn5, binding.btn6, binding.btnMultiply,
             binding.btn1, binding.btn2, binding.btn3, binding.btnSubtract,
-            binding.btn0, binding.btnClear, binding.btnEquals, binding.btnAdd
+            binding.btn0, binding.btnBackspace, binding.btnClear, binding.btnAdd,
+            binding.btnEquals
         )
 
         buttons.forEachIndexed { index, button ->
