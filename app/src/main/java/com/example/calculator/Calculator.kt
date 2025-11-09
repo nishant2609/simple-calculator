@@ -1,6 +1,6 @@
 package com.example.calculator
 
-class Calculator {
+class  Calculator {
     fun calculate(expression: String): Double {
         return try {
             val tokens = expression.split(" ")
